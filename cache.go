@@ -11,20 +11,26 @@ type PriceService interface {
 	GetPriceFor(itemCode string) (float64, error)
 }
 
+// TransparentCachePrice is a special price that stores the value and the time it was assigned
+type TransparentCachePrice struct {
+	value float64
+	lastAssigment time.Time
+}
+
 // TransparentCache is a cache that wraps the actual service
 // The cache will remember prices we ask for, so that we don't have to wait on every call
 // Cache should only return a price if it is not older than "maxAge", so that we don't get stale prices
 type TransparentCache struct {
 	actualPriceService PriceService
 	maxAge             time.Duration
-	prices             map[string]float64
+	prices             map[string]TransparentCachePrice
 }
 
 func NewTransparentCache(actualPriceService PriceService, maxAge time.Duration) *TransparentCache {
 	return &TransparentCache{
 		actualPriceService: actualPriceService,
 		maxAge:             maxAge,
-		prices:             map[string]float64{},
+		prices:             map[string]TransparentCachePrice{},
 	}
 }
 
