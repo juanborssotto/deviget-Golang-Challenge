@@ -1,6 +1,7 @@
 package sample1
 
 import (
+	"errors"
 	"testing"
 	"time"
 	"fmt"
@@ -75,6 +76,12 @@ func assertFloats(t *testing.T, expected []float64, actual []float64, msg string
 			t.Error(msg, fmt.Sprintf("expected : %v, got : %v", expected, actual))
 			return
 		}
+	}
+}
+
+func assertNotNilErr(t *testing.T, err error, msg string) {
+	if err == nil {
+		t.Error(msg, fmt.Sprintf("got nil error"))
 	}
 }
 
@@ -170,3 +177,20 @@ func TestGetPricesFor_ParallelizeCalls(t *testing.T) {
 		t.Error("calls took too long, expected them to take a bit over one second")
 	}
 }
+
+// Check that cache returns an error when getting several values at once but one fails
+func TestGetPricesFor_ReturnsErrorWhenOneFails(t *testing.T) {
+	mockErr := errors.New("foo")
+	mockService := &mockPriceService{
+		callDelay: time.Second, // each call to external service takes one full second
+		mockResults: map[string]mockResult{
+			"p1": {price: 5, err: nil},
+			"p2": {price: 7, err: mockErr},
+			"p3": {price: 9, err: nil},
+		},
+	}
+	cache := NewTransparentCache(mockService, time.Minute)
+	_, err := cache.GetPricesFor("p1", "p2", "p3")
+	assertNotNilErr(t, err, "wrong error returned")
+}
+

@@ -8,3 +8,4 @@
 * Second TODO: noticed that GetPriceFor was reading and writing a shared resource, so proceed to add
   a mutex to lock before those operations. Then added the parallelization logic to GetPricesFor and same 
   as before, tested it in the main function.
+* Unit tests: Checked that all tests were passing. Run a coverage and added a missing path test.
